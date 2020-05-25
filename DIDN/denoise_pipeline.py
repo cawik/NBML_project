@@ -16,7 +16,7 @@ from skimage import io as skimage_io
 parser = argparse.ArgumentParser(description="PyTorch DIDN  Eval")
 parser.add_argument("--cuda", action="store_true", help="use cuda?")
 parser.add_argument("--model", default="./checkpoint/pretrained_gray/gray_model.pth", type=str, help="model path")
-parser.add_argument("--output_path", default="/src/nml_img_vid_enhance/_sample_data/denoisepipe_test/out/", type=str, help="output path")
+parser.add_argument("--output_path", default="/src/nml_img_vid_enhance/_sample_data/denoisepipe_test/out", type=str, help="output path")
 parser.add_argument("--input_dir", default="/src/nml_img_vid_enhance/_sample_data/denoisepipe_test/in", type=str, help="output path")
 parser.add_argument("--self_ensemble", action="store_true", help="Use self ensemble?")
 parser.add_argument("--gpus", default="0", type=str, help="gpu ids (default: 0)")
@@ -54,6 +54,8 @@ with torch.no_grad():
     input_dir = opt.input_dir
     ct = 0.0
     avg_elapsed_time = 0.0
+    output_dir_files = os.listdir(opt.output_path)
+
 
     for filename in os.listdir(input_dir):
         print(f'Processing {filename}...')
@@ -64,6 +66,12 @@ with torch.no_grad():
         noisy_data = []
         out_data = []
         output = 0
+
+        if ("de" + filename) in output_dir_files:
+            print(f"INFO:\t{filename} already denoised and exists in output.")
+            ct += 1
+            print(100 * ct / (len(os.listdir(input_dir))), "percent done")
+            continue
 
         if opt.self_ensemble:
             # rotate / flip
@@ -127,7 +135,7 @@ with torch.no_grad():
         output = np.uint8(np.round(output))
 
         test_name = "de" + filename
-        imageio.imwrite(opt.output_path + test_name, output)  # save result images
+        imageio.imwrite(opt.output_path + "/" + test_name, output)  # save result images
 
         print(100 * ct / (len(os.listdir(input_dir))), "percent done")
 
